@@ -1,0 +1,24 @@
+# Um bloco por app, em <app>.{$APPS_DOMAIN}. Depois de editar, no servidor:
+#   sudo -u deploy bash /opt/servidor-apps/scripts/atualizar.sh
+# HTTPS automático (Let's Encrypt); http:// redireciona para https://.
+# Subdomínio sem bloco aqui não recebe certificado: a conexão HTTPS é recusada.
+
+(padrao) {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
+
+# Domínio raiz: nenhum app
+{$APPS_DOMAIN} {
+	import padrao
+	respond "Nenhum app neste endereço." 404
+}
+
+# Habits — repositório AlexcrGomes/habitsapp, serviço web com apelido habits-web
+habits.{$APPS_DOMAIN} {
+	import padrao
+	reverse_proxy habits-web:80
+}

@@ -1,0 +1,32 @@
+# Proxy HTTPS compartilhado do servidor-apps: o único serviço com portas abertas (80/443).
+# Cada app liga o seu serviço web à rede externa "proxy" com um apelido próprio, e o
+# caddy/Caddyfile encaminha <app>.$APPS_DOMAIN para esse apelido.
+#   docker compose up -d
+name: servidor-apps
+
+services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APPS_DOMAIN: ${APPS_DOMAIN:?defina APPS_DOMAIN no .env}
+    volumes:
+      # Pasta inteira (não o arquivo): um "git pull" troca o arquivo e o contêiner vê a versão nova
+      - ./caddy:/etc/caddy:ro
+      # Certificados guardados entre reinícios (evita o limite de emissão do Let's Encrypt)
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    # Criada uma vez por scripts/server-setup.sh: docker network create proxy
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:
